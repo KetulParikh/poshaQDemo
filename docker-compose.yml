@@ -1,0 +1,36 @@
+version : "3.3"
+
+services:
+    flask:
+        build: 
+            context: .
+            dockerfile: ./src/Dockerfile
+        container_name: flask
+        restart: always
+        environment:
+            - ENV=production
+        expose:
+            - 8080
+        volumes:
+            - ./container_app_logs:/app/etc
+        links:
+            - mongo
+
+    nginx:
+        build: ./nginx
+        container_name: nginx
+        restart: always
+        ports:
+            - "80:80"
+
+    mongo:
+        image: 'mongo:latest'
+        command: [--auth]
+        ports:
+            - '27018:27017'
+        volumes:
+            - 'mongo:/data/db'
+
+volumes: 
+    container_app_logs:
+    mongo:

@@ -1,0 +1,10 @@
+bcrypt
+Flask==1.1.2
+uWSGI==2.0.18
+python-dotenv
+Flask-PyMongo==2.3.0
+Flask-RESTful==0.3.8
+Flask-Cors==1.10.3
+Flask_JWT_Extended==3.24.1
+requests==2.24.0
+pandas==1.1.3

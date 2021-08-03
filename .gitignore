@@ -1,0 +1,6 @@
+env/
+*__pycache__/
+etc/
+.vscode/
+data/
+src/app_config/

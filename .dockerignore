@@ -1,0 +1,6 @@
+env/
+*__pycache__/
+etc/
+container_app_logs/
+mongo/
+.vscode/
