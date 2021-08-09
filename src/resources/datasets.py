@@ -24,10 +24,11 @@ class insertData(Resource):
 
     def post(self):
         dataset_url = os.environ.get("URL") + "datasets"
-        data = self.dataset_parser.parse_args()
-        df = pd.read_csv(data["file"], sep=",")
+        # data = self.dataset_parser.parse_args()
+        # df = pd.read_csv(data["file"], sep=",")
+        # df.to_csv(file_path, index=False, sep=";")
+
         file_path = "data/kdemon.csv"
-        df.to_csv(file_path, index=False, sep=";")
 
         files = open(file_path, "rb")
         mimetype = mimetypes.guess_type(file_path, strict=True)[0]
@@ -35,27 +36,29 @@ class insertData(Resource):
         file_dict = MultipartEncoder(
             fields={'file': (file_name, files, mimetype)})
         headers = {
-            'Authorization': 'Bearer ' + os.environ.get("PIXELAI_ACCESS_TOKEN"),
+            'Authorization': 'Bearer ' + "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2Mjg1MTU2MzEsIm5iZiI6MTYyODUxNTYzMSwianRpIjoiYTNhOTllZGEtMjgyYi00NjlmLTliNGEtNTllOTFhZmI3MjA2IiwiaWRlbnRpdHkiOiIyYmIzYTNhNC1jNzY2LTQ4YmYtOTYxOS0yYTQ4YzE1NWI2ODQiLCJmcmVzaCI6ZmFsc2UsInR5cGUiOiJhY2Nlc3MifQ.TyGS3Y4Ay1t5qPQ30GTcG5q84W1bzsTrf1UdxxiT1gw",
             'Content-Type': file_dict.content_type
         }
 
         response = requests.request(
             "POST", dataset_url, headers=headers, data=file_dict)
 
-        print(response.text)
-        if(response.status_code == 401):
-            print("Login Again")
-            _success, headers_new = pixelai.login()
-            if _success:
-                headers_new.update({'Content-Type': file_dict.content_type})
-                print(dataset_url)
-                print(headers_new)
-                print(file_dict)
-                response = requests.post(
-                    dataset_url, headers=headers_new, data=file_dict)
-                print("Waiting....")
-            else:
-                return "Internel Server Error", 500
+        # print(response.text)
+        # if(response.status_code == 401):
+        #     # print("Login Again")
+        #     _success, headers_new = pixelai.login()
+        #     if _success:
+        #         headers_new.update({'Content-Type': file_dict.content_type})
+        #         print(dataset_url)
+        #         print(headers_new)
+        #         print("-------")
+        #         print(file_dict)
+        #         response = requests.post(
+        #             dataset_url, headers=headers_new, data=file_dict)
+        #         print("Waiting....")
+        #     else:
+        #         return "Internel Server Error", 500
+        print("---------------------------")
         status = response.status_code
         response = json.loads(response.text)
 
