@@ -3,6 +3,8 @@ from flask_restful import Resource
 from flask import request, make_response
 from flask_restful import reqparse
 import werkzeug
+import mimetypes
+from requests_toolbelt import MultipartEncoder
 import requests
 import json
 import pandas as pd
@@ -24,23 +26,34 @@ class insertData(Resource):
         dataset_url = os.environ.get("URL") + "datasets"
         data = self.dataset_parser.parse_args()
         df = pd.read_csv(data["file"], sep=",")
-        df.to_csv("data/kdemon.csv", index=False, sep=";")
+        file_path = "data/kdemon.csv"
+        df.to_csv(file_path, index=False, sep=";")
 
-        files = {"file":  open("data/kdemon.csv", "rb")}
+        files = open(file_path, "rb")
+        mimetype = mimetypes.guess_type(file_path, strict=True)[0]
+        file_name = file_path.split('/')[-1]
+        file_dict = MultipartEncoder(
+            fields={'file': (file_name, files, mimetype)})
         headers = {
             'Authorization': 'Bearer ' + os.environ.get("PIXELAI_ACCESS_TOKEN"),
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': file_dict.content_type
         }
 
         response = requests.request(
-            "POST", dataset_url, headers=headers, files=files)
+            "POST", dataset_url, headers=headers, data=file_dict)
 
+        print(response.text)
         if(response.status_code == 401):
+            print("Login Again")
             _success, headers_new = pixelai.login()
             if _success:
-                headers_new.update({'Content-Type': 'multipart/form-data'})
+                headers_new.update({'Content-Type': file_dict.content_type})
+                print(dataset_url)
+                print(headers_new)
+                print(file_dict)
                 response = requests.post(
-                    dataset_url, headers=headers_new, data={}, files=files)
+                    dataset_url, headers=headers_new, data=file_dict)
+                print("Waiting....")
             else:
                 return "Internel Server Error", 500
         status = response.status_code
