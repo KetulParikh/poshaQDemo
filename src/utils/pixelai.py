@@ -14,7 +14,6 @@ def login():
     response = requests.request("POST", login_url, json=payload)
     try:
         response = json.loads(response.text)
-        log.info(response)
         os.environ.update({"PIXELAI_ACCESS_TOKEN": response["access_token"]})
         headers = {
             'Authorization': 'Bearer ' + os.environ.get("PIXELAI_ACCESS_TOKEN")
