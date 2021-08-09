@@ -40,6 +40,10 @@ class insertData(Resource):
             'Content-Type': file_dict.content_type
         }
 
+        print(dataset_url)
+        print(headers)
+        print("-------")
+        print(file_dict)
         response = requests.request(
             "POST", dataset_url, headers=headers, data=file_dict)
 
