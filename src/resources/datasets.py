@@ -7,6 +7,7 @@ import mimetypes
 from requests_toolbelt import MultipartEncoder
 import requests
 import json
+import uuid
 import pandas as pd
 
 from utils import pixelai
@@ -22,49 +23,51 @@ class insertData(Resource):
                                          required=True, case_sensitive=True, location='files', help="Provide file")
         super(insertData, self).__init__()
 
-    def post(self):
-        dataset_url = os.environ.get("URL") + "datasets"
-        # data = self.dataset_parser.parse_args()
-        # df = pd.read_csv(data["file"], sep=",")
-        # df.to_csv(file_path, index=False, sep=";")
-
-        file_path = "data/kdemon.csv"
-
+    def get_file_info(self, file_path):
         files = open(file_path, "rb")
         mimetype = mimetypes.guess_type(file_path, strict=True)[0]
         file_name = file_path.split('/')[-1]
         file_dict = MultipartEncoder(
             fields={'file': (file_name, files, mimetype)})
+        return file_dict
+
+    def post(self):
+        dataset_url = os.environ.get("URL") + "datasets"
+        data = self.dataset_parser.parse_args()
+        df = pd.read_csv(data["file"], sep=",")
+        temp_name = str(uuid.uuid4())
+        file_path = "data/" + temp_name + ".csv"
+        df.to_csv(file_path, index=False, sep=";")
+
+        file_dict = self.get_file_info(file_path)
         headers = {
-            'Authorization': 'Bearer ' + "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2Mjg1MTU2MzEsIm5iZiI6MTYyODUxNTYzMSwianRpIjoiYTNhOTllZGEtMjgyYi00NjlmLTliNGEtNTllOTFhZmI3MjA2IiwiaWRlbnRpdHkiOiIyYmIzYTNhNC1jNzY2LTQ4YmYtOTYxOS0yYTQ4YzE1NWI2ODQiLCJmcmVzaCI6ZmFsc2UsInR5cGUiOiJhY2Nlc3MifQ.TyGS3Y4Ay1t5qPQ30GTcG5q84W1bzsTrf1UdxxiT1gw",
+            'Authorization': 'Bearer ' + os.environ.get("PIXELAI_ACCESS_TOKEN"),
             'Content-Type': file_dict.content_type
         }
-
-        print(dataset_url)
-        print(headers)
-        print("-------")
-        print(file_dict)
         response = requests.request(
             "POST", dataset_url, headers=headers, data=file_dict)
 
-        # print(response.text)
-        # if(response.status_code == 401):
-        #     # print("Login Again")
-        #     _success, headers_new = pixelai.login()
-        #     if _success:
-        #         headers_new.update({'Content-Type': file_dict.content_type})
-        #         print(dataset_url)
-        #         print(headers_new)
-        #         print("-------")
-        #         print(file_dict)
-        #         response = requests.post(
-        #             dataset_url, headers=headers_new, data=file_dict)
-        #         print("Waiting....")
-        #     else:
-        #         return "Internel Server Error", 500
-        print("---------------------------")
+        if(response.status_code == 401):
+            log.info("Login Again")
+            _success, _ = pixelai.login()
+            if _success:
+                file_dict = self.get_file_info(file_path)
+                headers = {
+                    'Authorization': 'Bearer ' + os.environ.get("PIXELAI_ACCESS_TOKEN"),
+                    'Content-Type': file_dict.content_type
+                }
+                response = requests.post(
+                    dataset_url, headers=headers, data=file_dict)
+            else:
+                return "Internel Server Error", 500
+
         status = response.status_code
         response = json.loads(response.text)
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            print("Can not delete the file as it doesn't exists")
 
         return response, status
 
@@ -83,6 +86,7 @@ class checkStatus(Resource):
             "GET", status_url, headers=headers)
 
         if(response.status_code == 401):
+            log.info("Login Again")
             _success, headers_new = pixelai.login()
             if _success:
                 response = requests.request(
@@ -108,6 +112,7 @@ class autoTag(Resource):
         response = requests.request("GET", url, headers=headers)
 
         if(response.status_code == 401):
+            log.info("Login Again")
             _success, headers_new = pixelai.login()
             if _success:
                 response = requests.request("GET", url, headers=headers_new)
@@ -132,6 +137,7 @@ class autoTagStatus(Resource):
         response = requests.request("GET", url, headers=headers)
 
         if(response.status_code == 401):
+            log.info("Login Again")
             _success, headers_new = pixelai.login()
             if _success:
                 response = requests.request("GET", url, headers=headers_new)
@@ -156,6 +162,7 @@ class downloadFile(Resource):
         response = requests.request("GET", url, headers=headers)
 
         if(response.status_code == 401):
+            log.info("Login Again")
             _success, headers_new = pixelai.login()
             if _success:
                 response = requests.request(
