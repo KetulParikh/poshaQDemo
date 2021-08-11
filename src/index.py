@@ -26,7 +26,7 @@ api = Api(app)
 # mongo.init_app(app)
 CORS(app)
 
-print("----")
+print("--")
 # @jwt.expired_token_loader
 # def expired_token_callback(error):
 #     return jsonify({
